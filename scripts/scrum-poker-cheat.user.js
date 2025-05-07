@@ -4,7 +4,8 @@
 // @version      1.0.0
 // @description  reveal votes in scrumpoker-online
 // @author       oleoleoleoleo
-// @match        https://www.scrumpoker-online.org/
+// @match        https://www.scrumpoker-online.org/*
+// @match        https://scrumpoker-online.org/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 // @grant        none
 // ==/UserScript==
