@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         make gitbucket less poop
+// @name         improve bitbucket experience
 // @namespace    oleoleoleoleo
 // @version      1.0.0
 // @description  add see/hide button for gitbucket PR comments
@@ -15,23 +15,25 @@
 
     const className = 'see-hide-button';
 
-    const hashString = (text) => {
-        let hash = 5381;
-        for (let i = 0; i < text.length; i++) {
-            hash = (hash * 33) ^ text.charCodeAt(i);
-        };
-        return (hash >>> 0).toString(36);
-    };
-
     const addButtons = () => {
         const allComments = document.querySelectorAll('.commented-activity');
-        for (const comment of allComments) {
+        for (let i = allComments.length - 1; i > -1; i--) {
+            const comment = allComments[i];
             const alreadyExists = comment.getElementsByClassName(className).length;
             const isGeneralComment = !comment.getElementsByClassName('activity-content').length;
+            let appendableElement = comment.querySelector('.user-avatar')
 
-            if (alreadyExists || isGeneralComment) {
+            if (alreadyExists || isGeneralComment || !appendableElement) {
                 return;
             };
+
+            appendableElement = appendableElement.parentElement;
+
+            const hideableElements = [
+                comment.querySelector('.file-comment'),
+                Array.from(comment.querySelectorAll('.comment-content')),
+                Array.from(document.querySelectorAll('.comment'))
+            ].flat().filter(x => !!x);
 
             // see/hide button
             const button = document.createElement('p');
@@ -42,17 +44,21 @@
             button.className = className;
 
             const hide = () => {
-                comment.lastChild.style.visibility = 'hidden';
+                for(hideable of hideableElements) {
+                    hideable.style.visibility = 'hidden';
+                }
                 comment.style.height = '20px';
             };
 
             const show = () => {
-                comment.lastChild.style.visibility = '';
+                for(hideable of hideableElements) {
+                    hideable.style.visibility = '';
+                }
                 comment.style.height = '';
             };
 
             button.onclick = () => {
-                if (comment.lastChild.style.visibility === 'hidden') {
+                if (hideableElements[0].style.visibility === 'hidden') {
                     show();
                     return;
                 };
@@ -64,7 +70,7 @@
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
 
-            const commentId = hashString(comment.innerText.slice(0, 300));
+            const commentId = `${window.location.href}-comment-${i}`;
             const isDone = GM_getValue(commentId, false);
             checkbox.checked = isDone;
 
@@ -81,8 +87,8 @@
             label.textContent = ' done ';
             label.appendChild(checkbox);
 
-            comment.firstChild.appendChild(button);
-            comment.firstChild.appendChild(label);
+            appendableElement.appendChild(button);
+            appendableElement.appendChild(label);
         };
     };
 
