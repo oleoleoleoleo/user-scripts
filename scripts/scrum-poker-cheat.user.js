@@ -19,9 +19,9 @@
         const allCardBacks = document.getElementsByClassName('flip-card-back');
         Array.from(allCardBacks).forEach((card) => {
             const parentOfParent = card.parentElement.parentElement;
-            const alreadyExists = parentOfParent.getElementsByClassName(className);
+            const alreadyExists = parentOfParent.querySelector(`.${className}`);
             const voteValue = card.innerText;
-            if (voteValue && !alreadyExists.length) {
+            if (voteValue && !alreadyExists) {
                 const voteEl = document.createElement('p');
                 voteEl.className = className;
                 voteEl.style.position = 'absolute';
