@@ -21,17 +21,30 @@
             const parentOfParent = card.parentElement.parentElement;
             const alreadyExists = parentOfParent.querySelector(`.${className}`);
             const voteValue = card.innerText;
-            if (voteValue && !alreadyExists) {
+            const isUpToDate = voteValue && alreadyExists?.innerText === voteValue;
+
+            if (isUpToDate) {
+                return;
+            }
+
+            if (!voteValue) {
+                alreadyExists?.remove();
+                return;
+            }
+
+            if (!alreadyExists) {
                 const voteEl = document.createElement('p');
                 voteEl.className = className;
                 voteEl.style.position = 'absolute';
-                voteEl.style.left = '50px'
-                voteEl.style.top = '-21px'
-                voteEl.style.color = 'black'
-                voteEl.style.border = '2px solid black'
-                voteEl.style.padding = '2px 4px'
+                voteEl.style.left = '50px';
+                voteEl.style.top = '-21px';
+                voteEl.style.color = 'black';
+                voteEl.style.border = '2px solid black';
+                voteEl.style.padding = '2px 4px';
                 voteEl.innerHTML = voteValue;
                 parentOfParent.appendChild(voteEl);
+            } else {
+                alreadyExists.innerHTML = voteValue;
             }
 
         })
@@ -39,7 +52,7 @@
 
     const observer = new MutationObserver((mutations) => {
         mutations.forEach(function (mutation) {
-            if (mutation.type === 'childList') {
+            if (mutation.type === 'childList' || mutation.type === 'subtree') {
                 revealAllVotes();
             }
         });
