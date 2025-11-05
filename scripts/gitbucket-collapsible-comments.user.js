@@ -11,101 +11,106 @@
 // ==/UserScript==
 
 (function () {
-    'use strict';
+  'use strict';
 
-    const className = 'see-hide-button';
+  const buttonClassName = 'see-hide-button';
+  const pullRequestId = document
+    .querySelector('.branch-from-to')
+    .textContent.replace(/[^A-Z0-9|-]/gi, '');
+  const shouldIgnoreMutation = mutation => mutation.target.closest('.activity-content');
 
-    const addButtons = () => {
-        const allComments = document.querySelectorAll('.commented-activity');
-        for (let i = allComments.length - 1; i > -1; i--) {
-            const comment = allComments[i];
-            const alreadyExists = comment.getElementsByClassName(className).length;
-            const isGeneralComment = !comment.getElementsByClassName('activity-content').length;
-            let appendableElement = comment.querySelector('.user-avatar')
+  const addButtons = () => {
+    const allComments = document.querySelectorAll('.commented-activity');
+    for (let i = 0; i < allComments.length; i++) {
+      const comment = allComments[i];
+      const alreadyExists = comment.getElementsByClassName(buttonClassName).length;
+      const isGeneralComment = !comment.getElementsByClassName('activity-content').length;
+      const userAvatar = comment.querySelector('.user-avatar');
+      const rootComment = comment.querySelector('.is-root-comment');
 
-            if (alreadyExists || isGeneralComment || !appendableElement) {
-                return;
-            };
+      if (alreadyExists || isGeneralComment || !userAvatar || !rootComment) {
+        continue;
+      }
 
-            appendableElement = appendableElement.parentElement;
+      const commmentWithId = rootComment.querySelector('.comment');
+      const commentId = commmentWithId.getAttribute('data-comment-id');
+      const monkeyId = `${pullRequestId}-${commentId}`;
 
-            const hideableElements = [
-                comment.querySelector('.file-comment'),
-                Array.from(comment.querySelectorAll('.comment-content')),
-                Array.from(document.querySelectorAll('.comment'))
-            ].flat().filter(x => !!x);
+      const appendableElement = userAvatar.parentElement;
+      const hideableElement = comment.querySelector('.file-comment');
 
-            // see/hide button
-            const button = document.createElement('p');
-            button.innerText = 'see/hide';
-            button.style.marginLeft = '4rem';
-            button.style.marginRight = '2rem';
-            button.style.cursor = 'pointer';
-            button.className = className;
+      // see/hide button
+      const button = document.createElement('p');
+      button.innerText = 'see/hide';
+      button.style.cursor = 'pointer';
+      button.className = buttonClassName;
 
-            const hide = () => {
-                for(hideable of hideableElements) {
-                    hideable.style.visibility = 'hidden';
-                }
-                comment.style.height = '20px';
-            };
+      const hide = () => {
+        hideableElement.style.visibility = 'hidden';
+        comment.style.height = '20px';
+      };
 
-            const show = () => {
-                for(hideable of hideableElements) {
-                    hideable.style.visibility = '';
-                }
-                comment.style.height = '';
-            };
+      const show = () => {
+        hideableElement.style.visibility = '';
+        comment.style.height = '';
+      };
 
-            button.onclick = () => {
-                if (hideableElements[0].style.visibility === 'hidden') {
-                    show();
-                    return;
-                };
-                
-                hide();
-            };
+      button.onclick = () => {
+        if (hideableElement.style.visibility === 'hidden') {
+          show();
+        } else {
+          hide();
+        }
+      };
 
-            // DONE checkbox
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
+      // DONE checkbox
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
 
-            const commentId = `${window.location.href}-comment-${i}`;
-            const isDone = GM_getValue(commentId, false);
-            checkbox.checked = isDone;
+      const isDone = GM_getValue(monkeyId, false);
+      checkbox.checked = isDone;
 
-            if (isDone) {
-                hide();
-            };
+      if (isDone) {
+        hide();
+      }
 
-            checkbox.addEventListener('change', () => {
-                GM_setValue(commentId, checkbox.checked);
-            });
+      checkbox.addEventListener('change', () => {
+        GM_setValue(monkeyId, checkbox.checked);
+      });
 
-            const label = document.createElement('label');
-            label.style.cursor = 'pointer';
-            label.textContent = ' done ';
-            label.appendChild(checkbox);
+      const label = document.createElement('label');
+      label.style.cursor = 'pointer';
+      label.textContent = ' done ';
+      label.appendChild(checkbox);
 
-            appendableElement.appendChild(button);
-            appendableElement.appendChild(label);
-        };
-    };
+      // wrapper
+      const monkeyDiv = document.createElement('div');
+      monkeyDiv.style.display = 'flex';
+      monkeyDiv.style.gap = '20px';
+      monkeyDiv.style.paddingLeft = '20px';
+      monkeyDiv.style.paddingRight = '20px';
 
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach(function (mutation) {
-            if (mutation.type === 'childList') {
-                addButtons();
-            };
-        });
-    });
+      monkeyDiv.appendChild(button);
+      monkeyDiv.appendChild(label);
 
-    const config = {
-        childList: true,
-        subtree: true,
-    };
+      appendableElement.children[1].insertAdjacentElement('afterend', monkeyDiv);
+    }
+  };
 
-    observer.observe(document.body, config);
+  const observer = new MutationObserver(mutations => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList' && !shouldIgnoreMutation(mutation)) {
+        addButtons();
+      }
+    }
+  });
 
-    addButtons();
+  const config = {
+    childList: true,
+    subtree: true,
+  };
+
+  observer.observe(document.body, config);
+
+  addButtons();
 })();
