@@ -94,17 +94,14 @@
         continue;
       }
 
-      // mark body hidden in place
       commentBody.setAttribute('hidden-in-place', 'true');
       commentBody.classList.add(beenTampered);
 
-      // placeholder to restore original DOM position
       const placeholder = document.createComment('body-placeholder');
       let hideTimer = null;
       let floating = null;
 
       const showFloating = () => {
-        // If already floating, just cancel hide timer and return
         if (floating && floating.contains(commentBody)) {
           if (hideTimer) {
             clearTimeout(hideTimer);
@@ -113,28 +110,22 @@
           return;
         }
 
-        // replace body in wrapper with placeholder
         if (commentBody.parentNode === comment) {
           comment.replaceChild(placeholder, commentBody);
         }
 
-        // create floating panel
         floating = document.createElement('div');
         floating.className = 'floating-body';
         floating.setAttribute('data-from-wrapper', '');
 
-        // move the original body element into floating (not a clone)
         commentBody.removeAttribute('hidden-in-place');
         commentBody.style.display = '';
         floating.appendChild(commentBody);
 
-        // position floating near title
         positionFloatingNextToTitle(floating, commentTitle);
 
-        // append to floating root
         floatingRoot.appendChild(floating);
 
-        // events to keep it open while hovered
         floating.addEventListener('mouseenter', cancelHide);
         floating.addEventListener('mouseleave', scheduleHide);
       };
@@ -144,7 +135,6 @@
           return;
         }
 
-        // move body back into wrapper, replacing placeholder
         commentBody.setAttribute('hidden-in-place', 'true');
         commentBody.style.display = '';
         commentBody.style.width = '95%';
@@ -155,7 +145,6 @@
           comment.appendChild(commentBody);
         }
 
-        // remove floating element
         if (floating.parentNode) {
           floating.parentNode.removeChild(floating);
         }
@@ -182,21 +171,17 @@
         const scrollX = window.scrollX || window.pageXOffset;
         const scrollY = window.scrollY || window.pageYOffset;
 
-        // default position: below the title
         let left = rect.left + scrollX;
         let top = rect.bottom + scrollY + 6;
 
-        // ensure it doesn't overflow the right edge
         const maxWidth = Math.min(window.innerWidth * 0.8, 600);
         floatingEl.style.minWidth = Math.max(rect.width, 120) + 'px';
         floatingEl.style.maxWidth = maxWidth + 'px';
 
-        // temporarily append (visibility hidden) to measure
         floatingEl.style.visibility = 'hidden';
         document.body.appendChild(floatingEl);
         const fRect = floatingEl.getBoundingClientRect();
 
-        // adjust left if overflowing
         if (left + fRect.width > scrollX + window.innerWidth) {
           left = Math.max(
             scrollX + window.innerWidth - fRect.width - 8,
@@ -204,7 +189,6 @@
           );
         }
 
-        // if not enough space below, try placing above
         if (top + fRect.height > scrollY + window.innerHeight) {
           const altTop = rect.top + scrollY - fRect.height - 6;
           if (altTop > scrollY) top = altTop;
@@ -219,7 +203,6 @@
       hoverable.className = 'custom-button';
       hoverable.innerText = 'multiple commits';
 
-      // attach events to title
       hoverable.addEventListener('mouseenter', () => {
         cancelHide();
         showFloating();
@@ -228,7 +211,6 @@
 
       commentTitle.appendChild(hoverable);
 
-      // reposition floating window on scroll/resize
       window.addEventListener(
         'scroll',
         () => {
